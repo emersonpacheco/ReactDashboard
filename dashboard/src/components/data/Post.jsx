@@ -14,17 +14,30 @@ const postUser = async (userName, userEmail, password) => {
   }
 };
 
-const postOrder = async (userId, totalAmount, status) => {
+const postOrder = async (orderData) => {
   try {
-    const response = await axios.post("http://localhost:5000/api/orders", {
+    const { userId, totalAmount, status, products } = orderData;
+    
+    // Ensure products array is not empty
+    if (!products || products.length === 0) {
+      return { error: "Order must include at least one product" };
+    }
+
+    // Create the order with products (excluding price)
+    const orderResponse = await axios.post("http://localhost:5000/api/orders", {
       user_id: parseInt(userId),
       total_amount: parseFloat(totalAmount),
       status: status,
+      products: products.map(product => ({
+        product_id: product.product_id,
+        quantity: product.quantity
+      })),
     });
-    return response.data;
+    
+    return { order: orderResponse.data, success: true };
   } catch (error) {
     console.error("Error:", error);
-    return { error: "Error inserting order" };
+    return { error: "Error creating order" };
   }
 };
 

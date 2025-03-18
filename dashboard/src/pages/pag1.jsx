@@ -14,7 +14,6 @@ const Page1 = () => {
   const [searchType, setSearchType] = useState("username"); // Options: username, total_spent, created_at
   const { data, setData, loading, error } = useData();
   const [showUserModal, setShowUserModal] = useState(false);
-  const [showOrderModal, setShowOrderModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserDrawer, setShowUserDrawer] = useState(false);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -191,35 +190,14 @@ const Page1 = () => {
     }
   };
 
-  // States for creating an order
-  const [orderUserId, setOrderUserId] = useState("");
-  const [orderTotalAmount, setOrderTotalAmount] = useState("");
-  const [orderStatus, setOrderStatus] = useState("pending");
-  const [orderResponse, setOrderResponse] = useState("");
-  const [orderAlertVisible, setOrderAlertVisible] = useState(false);
+// States for creating an order
+const [orderUserId, setOrderUserId] = useState("");
+const [orderStatus, setOrderStatus] = useState("pending");
+const [orderResponse, setOrderResponse] = useState("");
+const [orderAlertVisible, setOrderAlertVisible] = useState(false);
+const [showOrderModal, setShowOrderModal] = useState(false);
 
-  const handleCreateOrder = async () => {
-    const result = await postOrder(orderUserId, orderTotalAmount, orderStatus);
-    console.log("Order creation result:", result);
-    setOrderResponse(result);
-    
-    // Add the new order to the data if successful
-    if (result.order) {
-      setData([...data, result.order]);
-      
-      // Clear form fields after successful creation
-      setOrderUserId("");
-      setOrderTotalAmount("");
-      setOrderStatus("pending");
-      setShowOrderModal(false);
-      setOrderAlertVisible(true);
-      
-      // Hide alert after 3 seconds
-      setTimeout(() => {
-        setOrderAlertVisible(false);
-      }, 3000);
-    }
-  };
+
 
   // Open user drawer with orders
   const handleUserClick = (user) => {
@@ -284,16 +262,11 @@ const Page1 = () => {
       {/* Order Creation Modal */}
       {showOrderModal && 
       <OrderModal
-      showOrderModal = {showOrderModal}
-      setShowOrderModal =  {setShowOrderModal}
-      orderUserId = {orderUserId}
-      setOrderUserId =  {setOrderUserId}
-      orderTotalAmount =  {orderTotalAmount}
-      setOrderTotalAmount =  {setOrderTotalAmount}
-      orderStatus =  {orderStatus}
-      setOrderStatus =  {setOrderStatus}
-      handleCreateOrder =  {handleCreateOrder}
-      orderResponse =  {orderResponse}
+      showOrderModal={showOrderModal}
+      setShowOrderModal={setShowOrderModal}
+      data={data}
+      setData={setData}
+      postOrder={postOrder}
       />
       }
       {/* Advanced Search and Sort Controls */}

@@ -37,6 +37,7 @@ def get_data():
                             total_amount,
                             p.name AS product_name,
                             p.category AS product_category,
+                            price,
                             quantity,
                             category,
                             status,
@@ -102,12 +103,13 @@ def insert_order():
         user_id = data.get("user_id")
         total_amount = data.get("total_amount")
         status = data.get("status")
-        
-        # Validate that all required fields are provided
-        if user_id is None or total_amount is None or status is None:
+        products = data.get("products")  # Expecting products in the payload
+
+        # Validate required fields
+        if user_id is None or total_amount is None or status is None or products is None:
             return jsonify({"error": "Missing required fields"}), 400
             
-        # Validate data types
+        # Validate data types for user and amount
         try:
             user_id = int(user_id)
             total_amount = float(total_amount)
@@ -121,43 +123,55 @@ def insert_order():
             if not cur.fetchone():
                 return jsonify({"error": f"User with ID {user_id} does not exist"}), 404
                 
-            # Insert the order and get the ID
+            # Insert the order and get its ID
             cur.execute(
                 "INSERT INTO orders (user_id, total_amount, status) VALUES (%s, %s, %s) RETURNING id",
                 (user_id, total_amount, status)
             )
-            order_id = cur.fetchone()["id"]  # Use dictionary access since we're using RealDictCursor
+            order_id = cur.fetchone()["id"]  
+            
+            # Insert order items without price
+            for product in products:
+                product_id = product.get("product_id")
+                quantity = product.get("quantity")
+
+                if product_id is None or quantity is None:
+                    return jsonify({"error": "Missing product details"}), 400
+
+                cur.execute(
+                    "INSERT INTO order_items (order_id, product_id, quantity) VALUES (%s, %s, %s)",
+                    (order_id, product_id, quantity)
+                )
+
             conn.commit()
 
-            # Get the full order details with user information
+            # Retrieve the full order details including the inserted items
             cur.execute(
                 """
                 SELECT 
-                o.id AS order_id, 
-                u.id AS user_id,
-                p.id AS product_id,
-                u.created_at AS user_created_at,
-                o.created_at AS order_created_at,
-                total_amount,
-                p.name AS product_name,
-                p.category AS product_category,
-                quantity,
-                category,
-                status,
-                username,
-                email,
-                password_hash
-                from orders o
-                full outer join users u on o.user_id=u.id
-                full outer join order_items oi on oi.order_id=o.id
-                full outer join products p on oi.product_id=p.id
-                WHERE orders.user_id = %s
+                  o.id AS order_id, 
+                  u.id AS user_id,
+                  p.id AS product_id,
+                  u.created_at AS user_created_at,
+                  o.created_at AS order_created_at,
+                  o.total_amount,
+                  p.name AS product_name,
+                  p.category AS product_category,
+                  oi.quantity,
+                  o.status,
+                  u.username,
+                  u.email
+                FROM orders o
+                JOIN users u ON o.user_id = u.id
+                JOIN order_items oi ON oi.order_id = o.id
+                JOIN products p ON oi.product_id = p.id
+                WHERE o.id = %s
                 """,
-                (user_id,)
+                (order_id,)
             )
-            order_data = cur.fetchone()
+            order_data = cur.fetchall()
             
-            if order_data is None:
+            if not order_data:
                 app.logger.error(f"Order was inserted but could not be retrieved with ID {order_id}")
                 return jsonify({"error": "Order was created but could not be retrieved"}), 500
 
@@ -172,7 +186,7 @@ def insert_order():
 
     except Exception as e:
         app.logger.error(f"Error inserting order: {str(e)}")
-        app.logger.error(traceback.format_exc())  # Added traceback for more details
+        app.logger.error(traceback.format_exc())
         return jsonify({"error": "Error inserting order", "details": str(e)}), 500
 
     finally:
