@@ -12,13 +12,32 @@ import Loading from '../components/pages/page1/Loading';
 const Page1 = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("username"); // Options: username, total_spent, created_at
-  const { data, setData, loading, error } = useData();
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserDrawer, setShowUserDrawer] = useState(false);
   const [sortDirection, setSortDirection] = useState("asc");
   const [sortBy, setSortBy] = useState("username");
+  const {
+    data,
+    setData,
+    loading,
+    error,
+    orders,
+    users,
+    orderItems,
+    products,
+    } = useData();
   // Helper function to format date
+ 
+
+    console.log("Orders:", orders);
+    console.log("Users:", users);
+    console.log("Order Items:", orderItems);
+    console.log("Products:", products);
+    console.log("Data:", data);
+
+
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     
@@ -191,8 +210,6 @@ const Page1 = () => {
   };
 
 // States for creating an order
-const [orderUserId, setOrderUserId] = useState("");
-const [orderStatus, setOrderStatus] = useState("pending");
 const [orderResponse, setOrderResponse] = useState("");
 const [orderAlertVisible, setOrderAlertVisible] = useState(false);
 const [showOrderModal, setShowOrderModal] = useState(false);

@@ -60,6 +60,125 @@ def get_data():
         if conn:
             conn.close()
 
+@app.route("/api/get_orders", methods=["GET"])
+def get_orders():
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Explicitly list all columns from orders.
+            # Replace/add columns if necessary.
+            query = """
+                SELECT 
+                    id AS order_id,
+                    user_id,
+                    created_at as order_created_at,
+                    total_amount
+                FROM orders
+            """
+            cur.execute(query)
+            orders = cur.fetchall()
+        return jsonify(orders)
+    except psycopg2.OperationalError as e:
+        app.logger.error(f"Connection error: {str(e)}")
+        return jsonify({"error": "Database connection failed"}), 503
+    except Exception as e:
+        app.logger.error(f"Error fetching orders: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+# GET users with alias for the id
+@app.route("/api/get_users", methods=["GET"])
+def get_users():
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Adjust the column list based on your users table
+            query = """
+                SELECT 
+                    id AS user_id,
+                    username,
+                    email,
+                    password_hash,
+                    created_at as user_created_at
+                FROM users
+            """
+            cur.execute(query)
+            users = cur.fetchall()
+        return jsonify(users)
+    except psycopg2.OperationalError as e:
+        app.logger.error(f"Connection error: {str(e)}")
+        return jsonify({"error": "Database connection failed"}), 503
+    except Exception as e:
+        app.logger.error(f"Error fetching users: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+# GET order_items with alias for the id
+@app.route("/api/get_order_items", methods=["GET"])
+def get_order_items():
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Adjust the column list based on your order_items table.
+            # Here, we assume order_items has an id, order_id, product_id, quantity, and price.
+            query = """
+                SELECT 
+                    id AS order_item_id,
+                    order_id,
+                    product_id,
+                    quantity
+                FROM order_items
+            """
+            cur.execute(query)
+            order_items = cur.fetchall()
+        return jsonify(order_items)
+    except psycopg2.OperationalError as e:
+        app.logger.error(f"Connection error: {str(e)}")
+        return jsonify({"error": "Database connection failed"}), 503
+    except Exception as e:
+        app.logger.error(f"Error fetching order items: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+# GET products with alias for the id
+@app.route("/api/get_products", methods=["GET"])
+def get_products():
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Adjust the column list based on your products table.
+            query = """
+                SELECT 
+                    id AS product_id,
+                    name,
+                    category,
+                    price,
+                    stock
+                FROM products
+            """
+            cur.execute(query)
+            products = cur.fetchall()
+        return jsonify(products)
+    except psycopg2.OperationalError as e:
+        app.logger.error(f"Connection error: {str(e)}")
+        return jsonify({"error": "Database connection failed"}), 503
+    except Exception as e:
+        app.logger.error(f"Error fetching products: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+    finally:
+        if conn:
+            conn.close()
+
 @app.route("/api/users", methods=["POST"])
 def insert_user():
     conn = None

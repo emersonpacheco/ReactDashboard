@@ -23,7 +23,7 @@ function App() {
     <div className='from-gray-100 via-gray-300 to-white dark:from-gray-800 dark:via-gray-700 dark:to-gray-900 min-h-screen relative transition-colors duration-300 bg-gradient-to-br'>
       {/* Fixed header */}
       <Header 
-        title={"Cool Header"}
+        title={"Sales Dashboard"}
         dark={darkMode} 
         onToggleDarkMode={() => setDarkMode(!darkMode)}
         className="fixed top-0 left-0 w-full z-30"
