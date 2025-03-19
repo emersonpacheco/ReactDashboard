@@ -94,7 +94,7 @@ const BarCategoryByDay = () => {
         <ResponsiveContainer width="100%" height={500}>
           <BarChart 
             data={dailyCategorySales}
-            margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="" />
             <XAxis 
