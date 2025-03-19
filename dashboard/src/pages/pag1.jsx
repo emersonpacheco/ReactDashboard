@@ -18,8 +18,6 @@ const Page1 = () => {
   const [sortDirection, setSortDirection] = useState("asc");
   const [sortBy, setSortBy] = useState("username");
   const {
-    _,
-    setData,
     loading,
     error,
     orders,
@@ -28,15 +26,6 @@ const Page1 = () => {
     products,
     } = useData();
   // Helper function to format date
- 
-
-    console.log("Orders:", orders);
-    console.log("Users:", users);
-    console.log("Order Items:", orderItems);
-    console.log("Products:", products);
-    console.log("Data:", _);
-
-
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -180,12 +169,6 @@ const getFilteredAndSortedUsers = () => {
 // Finally, use the filtered users
 const filteredUsers = getFilteredAndSortedUsers();
 
-console.log(getUniqueUsers(users));
-console.log(getUserOrders(orders, 1));
-console.log(`Total spent: $${getUserTotalSpent(orders, 1).toFixed(2)}`);
-console.log(filteredUsers);
-  
-  
   // States for creating a user
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");

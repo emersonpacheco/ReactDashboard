@@ -2,38 +2,36 @@ import React, { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import useData from '../../data/data';
 
-const TransactionperDay = () => {
-  const { data, loading, error } = useData();
+const TransactionPerDay = () => {
+  const { orders, loading, error } = useData();
   
   const chartData = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!orders || orders.length === 0) return [];
     
-    // Group sales by day
-    const salesByDay = data.reduce((acc, item) => {
-      const date = new Date(item.order_created_at);
+    // Group transactions by day
+    const transactionsByDay = orders.reduce((acc, order) => {
+      const date = new Date(order.order_created_at);
       if (!isNaN(date.getTime())) {
         const day = date.toISOString().split('T')[0];
         if (!acc[day]) {
-          acc[day] = { day, sales: 0, transactions: 0 };
+          acc[day] = { day, transactions: 0 };
         }
-        acc[day].sales += parseFloat(item.total_amount) || 0;
         acc[day].transactions += 1;
       }
       return acc;
     }, {});
     
     // Convert to array and sort by date
-    return Object.values(salesByDay)
+    return Object.values(transactionsByDay)
       .sort((a, b) => new Date(a.day) - new Date(b.day))
       .map(item => ({
-        ...item,
-        sales: parseFloat(item.sales.toFixed(2))
+        ...item
       }));
-  }, [data]);
+  }, [orders]);
   
-  if (loading) return <div className="text-center p-8">Loading sales data...</div>;
-  if (error) return <div className="text-center p-8 text-red-500">Error loading sales data</div>;
-  if (!chartData.length) return <div className="text-center p-8">No sales data available</div>;
+  if (loading) return <div className="text-center p-8">Loading transactions data...</div>;
+  if (error) return <div className="text-center p-8 text-red-500">Error loading transactions data</div>;
+  if (!chartData.length) return <div className="text-center p-8">No transactions data available</div>;
   return (
     <div className="hover:shadow-xl rounded-lg shadow-md shadow-gray-500 dark:shadow-black p-4 mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover">
       <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Transactions Per Day</h2>
@@ -56,10 +54,32 @@ const TransactionperDay = () => {
             tickFormatter={(value) => `${value.toLocaleString()}`}
           />
           <Tooltip 
-            formatter={(value) => [`${value.toLocaleString()}`, 'Sales']}
+            formatter={(value) => [`${value.toLocaleString()}`, 'Transactions']}
             labelFormatter={(label) => {
               const date = new Date(label);
               return date.toLocaleDateString('pt-BR', { weekday: 'short', month: 'short', day: 'numeric' });
+            }}
+            content={({ active, payload, label }) => {
+              if (active && payload && payload.length) {
+                // Use the labelFormatter to format the date in Portuguese
+                const formattedDate = (() => {
+                  const date = new Date(label);
+                  return date.toLocaleDateString('pt-BR', { weekday: 'short', month: 'short', day: 'numeric' });
+                })();
+                
+                return (
+                  <div className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 p-2 border border-gray-200 dark:border-gray-700 rounded shadow">
+                    <p className="font-medium">{formattedDate}</p>
+                    {payload.map((entry, index) => (
+                      <p key={`item-${index}`} className="flex items-center gap-2">
+                        <span className="w-3 h-3 inline-block" style={{ backgroundColor: entry.color }}></span>
+                        <span>{entry.name}: {Number(entry.value).toLocaleString()} Transactions</span>
+                      </p>
+                    ))}
+                  </div>
+                );
+              }
+              return null;
             }}
           />
           <Legend />
@@ -78,4 +98,4 @@ const TransactionperDay = () => {
   );
 };
 
-export default TransactionperDay;
+export default TransactionPerDay;

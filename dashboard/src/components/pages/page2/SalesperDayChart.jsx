@@ -3,20 +3,20 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import useData from '../../data/data';
 
 const SalesPerDayChart = () => {
-  const { data, loading, error } = useData();
+  const { orders, loading, error } = useData();
   
   const chartData = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!orders || orders.length === 0) return [];
     
     // Group sales by day
-    const salesByDay = data.reduce((acc, item) => {
-      const date = new Date(item.order_created_at);
+    const salesByDay = orders.reduce((acc, order) => {
+      const date = new Date(order.order_created_at);
       if (!isNaN(date.getTime())) {
         const day = date.toISOString().split('T')[0];
         if (!acc[day]) {
           acc[day] = { day, sales: 0, transactions: 0 };
         }
-        acc[day].sales += parseFloat(item.total_amount) || 0;
+        acc[day].sales += parseFloat(order.total_amount) || 0;
         acc[day].transactions += 1;
       }
       return acc;
@@ -29,7 +29,7 @@ const SalesPerDayChart = () => {
         ...item,
         sales: parseFloat(item.sales.toFixed(2))
       }));
-  }, [data]);
+  }, [orders]);
   
   if (loading) return <div className="text-center p-8">Loading sales data...</div>;
   if (error) return <div className="text-center p-8 text-red-500">Error loading sales data</div>;
@@ -61,7 +61,29 @@ const SalesPerDayChart = () => {
               const date = new Date(label);
               return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             }}
-          />
+            content={({ active, payload, label }) => {
+              if (active && payload && payload.length) {
+                // Use the labelFormatter to format the date
+                const formattedDate = (() => {
+                  const date = new Date(label);
+                  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                })();
+                
+                return (
+                  <div className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 p-2 border border-gray-200 dark:border-gray-700 rounded shadow">
+                    <p className="font-medium">{formattedDate}</p>
+                    {payload.map((entry, index) => (
+                      <p key={`item-${index}`} className="flex items-center gap-2">
+                        <span className="w-3 h-3 inline-block" style={{ backgroundColor: entry.color }}></span>
+                        <span>{entry.name}: ${Number(entry.value).toLocaleString()}</span>
+                      </p>
+                    ))}
+                  </div>
+                );
+              }
+              return null;
+            }}
+/>
           <Legend />
           <Line
             type="monotone"
