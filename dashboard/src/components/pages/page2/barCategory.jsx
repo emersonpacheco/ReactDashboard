@@ -8,18 +8,18 @@ const BarCategoryByDay = () => {
   
   // Define a color palette for different categories
   const categoryColors = {
-    'Furniture': '#8a7f8d',        // Muted purple-gray
-    'Kitchen': '#96857e',          // Warm taupe
-    'Electronics': '#7a908f',      // Muted teal
-    'Footwear': '#6d9a8f',         // Sage green
-    'Gaming': '#6ca48c',           // Dusty green
-    'Fitness': '#7eac83',          // Soft green
-    'Home Automation': '#91b279',  // Light olive
-    'Outdoor': '#a4b570',          // Yellowish green
-    'Photography': '#b7b56a',      // Olive yellow
-    'Office': '#c4b064',           // Gold
-    'Personal Care': '#c9a768',    // Sand
-    'Wearable Tech': '#c89a73'     // Light copper
+    'Furniture': '#220e24',        // Muted purple-gray
+    'Kitchen': '#342056',          // Warm taupe
+    'Electronics': '#5454c5',      // Muted teal
+    'Footwear': '#639cd9',         // Sage green
+    'Gaming': '#421d57',           // Dusty green
+    'Fitness': '#514e57',          // Soft green
+    'Home Automation': '#563e80',  // Light olive
+    'Outdoor': '#777280',          // Yellowish green
+    'Photography': '#ae96d9',      // Olive yellow
+    'Office': '#342580',           // Gold
+    'Personal Care': '#5039c5',    // Sand
+    'Wearable Tech': '#413c57'     // Light copper
   };
 
 
