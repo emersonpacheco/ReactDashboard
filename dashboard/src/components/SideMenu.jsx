@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MenuIcon, X, ChevronRight, ChevronLeft, Home, FileText } from 'lucide-react';
 
-const SideMenu = ({ darkMode }) => {
+const SideMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleSidebar = () => {

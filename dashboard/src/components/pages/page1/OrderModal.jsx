@@ -3,16 +3,16 @@ import React, { useState, useEffect } from "react";
 const OrderModal = ({
   showOrderModal,
   setShowOrderModal,
-  data,
-  setData,
   postOrder,
+  users, // Receive users array
+  products: initialProducts, // Receive products array
 }) => {
   // States for creating an order
   const [orderUserId, setOrderUserId] = useState("");
   const [orderStatus, setOrderStatus] = useState("pending");
   const [orderResponse, setOrderResponse] = useState("");
   const [orderAlertVisible, setOrderAlertVisible] = useState(false);
-  
+
   // Product selection states
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [currentProduct, setCurrentProduct] = useState("");
@@ -22,47 +22,38 @@ const OrderModal = ({
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    if (data && data.length > 0) {
-      const productMap = new Map();
-      data.forEach(order => {
-        // Check if order exists and the product name is not null
-        if (order && order.product_name && !productMap.has(order.product_name)) {
-          productMap.set(order.product_name, {
-            name: order.product_name,
-            price: order.price ? parseFloat(order.price) : 0,
-            category: order.product_category,
-            product_id: order.product_id
-          });
-        }
-      });
-      const uniqueProducts = Array.from(productMap.values());
-      setProducts(uniqueProducts);
+    if (initialProducts && initialProducts.length > 0) {
+      setProducts(initialProducts);
     }
-  }, [data]);
+  }, [initialProducts]);
 
   const addProductToOrder = () => {
     if (!currentProduct) return;
-    
-    const productToAdd = products.find(p => p.name === currentProduct);
+
+    const productToAdd = products.find((p) => p.name === currentProduct);
     if (!productToAdd) return;
-    
-    const existingProductIndex = selectedProducts.findIndex(p => p.name === currentProduct);
-    
+
+    const existingProductIndex = selectedProducts.findIndex(
+      (p) => p.name === currentProduct
+    );
+
     if (existingProductIndex >= 0) {
       const updatedProducts = [...selectedProducts];
-      updatedProducts[existingProductIndex].quantity += parseInt(currentQuantity);
+      updatedProducts[existingProductIndex].quantity += parseInt(
+        currentQuantity
+      );
       setSelectedProducts(updatedProducts);
     } else {
       setSelectedProducts([
-        ...selectedProducts, 
-        { 
-          name: currentProduct, 
-          price: productToAdd.price, 
-          quantity: parseInt(currentQuantity) 
-        }
+        ...selectedProducts,
+        {
+          name: currentProduct,
+          price: productToAdd.price,
+          quantity: parseInt(currentQuantity),
+        },
       ]);
     }
-    
+
     setCurrentProduct("");
     setCurrentQuantity(1);
   };
@@ -74,7 +65,7 @@ const OrderModal = ({
 
   const calculateTotalAmount = () => {
     const total = selectedProducts.reduce((sum, product) => {
-      return sum + (product.price * product.quantity);
+      return sum + product.price * product.quantity;
     }, 0);
     setOrderTotalAmount(total.toFixed(2));
   };
@@ -85,23 +76,22 @@ const OrderModal = ({
       userId: orderUserId,
       totalAmount: orderTotalAmount,
       status: orderStatus,
-      products: selectedProducts.map(product => {
-        const fullProduct = products.find(p => p.name === product.name);
+      products: selectedProducts.map((product) => {
+        const fullProduct = products.find((p) => p.name === product.name);
         return {
           product_id: fullProduct.product_id,
           product_name: fullProduct.name, // include name for the API
           quantity: product.quantity,
-          price: fullProduct.price,       // include price for the API
+          price: fullProduct.price, // include price for the API
         };
-      })
+      }),
     };
 
     const result = await postOrder(orderPayload);
     console.log("Order creation result:", result);
     setOrderResponse(result);
-    
+
     if (result.order) {
-      setData([...data, result.order]);
       setOrderUserId("");
       setSelectedProducts([]);
       setOrderStatus("pending");
@@ -118,7 +108,6 @@ const OrderModal = ({
   }, [selectedProducts]);
 
   if (!showOrderModal) return null;
-  
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
@@ -128,44 +117,86 @@ const OrderModal = ({
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
               <div className="bg-emerald-100 dark:bg-emerald-900 p-2 rounded-lg mr-3">
-                <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                <svg
+                  className="w-6 h-6 text-emerald-600 dark:text-emerald-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                  ></path>
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white">Create New Order</h2>
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                Create New Order
+              </h2>
             </div>
-            <button 
+            <button
               onClick={() => setShowOrderModal(false)}
               className="text-gray-500 hover:text-gray-700 transition-colors"
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
               </svg>
             </button>
           </div>
           <div className="flex flex-col space-y-4">
             {/* User ID Input */}
             <div className="relative">
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 block">User ID</label>
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 block">
+                User ID
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    ></path>
                   </svg>
                 </div>
-                <input 
-                  type="text" 
-                  placeholder="Enter user ID" 
-                  value={orderUserId} 
-                  onChange={(e) => setOrderUserId(e.target.value)} 
-                  className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none text-gray-800 dark:text-white transition-all"
-                />
+                <select
+                  value={orderUserId}
+                  onChange={(e) => setOrderUserId(e.target.value)}
+                  className="pl-10 w-full px-3 py-2 border bg-white dark:bg-gray-800 border-gray-300 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all appearance-none"
+                >
+                  <option value="">Select a user</option>
+                  {users &&
+                    users.map((user) => (
+                      <option key={user.user_id} value={user.user_id}>
+                        {user.username} (ID: {user.user_id})
+                      </option>
+                    ))}
+                </select>
               </div>
             </div>
-            
+
             {/* Product Selection */}
             <div className="relative">
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 block">Add Products</label>
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 block">
+                Add Products
+              </label>
               <div className="flex space-x-2">
                 <div className="relative flex-grow">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

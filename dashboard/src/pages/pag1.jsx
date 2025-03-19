@@ -18,7 +18,7 @@ const Page1 = () => {
   const [sortDirection, setSortDirection] = useState("asc");
   const [sortBy, setSortBy] = useState("username");
   const {
-    data,
+    _,
     setData,
     loading,
     error,
@@ -34,7 +34,7 @@ const Page1 = () => {
     console.log("Users:", users);
     console.log("Order Items:", orderItems);
     console.log("Products:", products);
-    console.log("Data:", data);
+    console.log("Data:", _);
 
 
 
@@ -68,126 +68,122 @@ const Page1 = () => {
     }
   };
 
-  // Get unique users from data - modified to include all users even if they have no orders
-  const getUniqueUsers = () => {
-    const users = {};
-    
-    data.forEach(item => {
-      if (item.user_id) {
-        if (!users[item.user_id]) {
-          users[item.user_id] = {
-            user_id: item.user_id,
-            username: item.username || 'Unknown',
-            email: item.email || 'No email',
-            user_created_at: item.user_created_at
-          };
-        }
-      }
-    });
-    
-    return Object.values(users);
-  };
 
-  // Get orders for a specific user
-  const getUserOrders = (userId) => {
-    const uniqueOrders = new Map();
+// Get orders for a specific user from the orders array
+const getUniqueUsers = () => {
+  const usersDic = {};
 
-    data.forEach(item => {
-        if (
-            item.user_id === userId && 
-            item.total_amount !== undefined && 
-            item.total_amount !== "[null]"
-        ) {
-            const orderKey = item.order_id || item.id;
-            
-            if (orderKey && !uniqueOrders.has(orderKey)) {
-                uniqueOrders.set(orderKey, {
-                    order_id: orderKey,
-                    user_id: item.user_id,
-                    username: item.username,
-                    email: item.email,
-                    total_amount: item.total_amount,
-                    status: item.status,
-                    order_created_at: item.order_created_at
-                });
-            }
-        }
-    });
+  users.forEach(user => {
+    if (user.user_id && !usersDic[user.user_id]) {
+      usersDic[user.user_id] = {
+        user_id: user.user_id,
+        username: user.username || 'Unknown',
+        email: user.email || 'No email',
+        user_created_at: user.user_created_at,
+      };
+    }
+  });
 
-    return Array.from(uniqueOrders.values());
+  return Object.values(usersDic);
 };
 
-  // Calculate total spent for a user
-  const getUserTotalSpent = (userId) => {
-    const userOrders = getUserOrders(userId);
-    return userOrders.reduce(
-      (sum, order) => sum + (parseFloat(order.total_amount) || 0), 
-      0
-    );
-  };
+const getUserOrders = (orders, userId) => {
+  const ordersArray = Array.isArray(orders) ? orders : Object.values(orders);
+  const uniqueOrders = new Map();
 
-  // Filter and sort users based on search term, search type, and sort settings
-  const getFilteredAndSortedUsers = () => {
-    let filteredUsers = getUniqueUsers().filter(user => {
-      // Skip if user is missing required properties
-      if (!user) return false;
-
-      switch (searchType) {
-        case "username":
-          return user.username && 
-            user.username.toLowerCase().includes(searchTerm.toLowerCase());
-        case "total_spent":
-          const totalSpent = getUserTotalSpent(user.user_id);
-          // Check if search term is a valid number to compare
-          const searchAmount = parseFloat(searchTerm);
-          if (isNaN(searchAmount)) return true; // Show all if search is not a valid number
-          return totalSpent >= searchAmount;
-        case "created_at":
-          if (!user.user_created_at) return false;
-          try {
-            const userDate = new Date(user.user_created_at).toLocaleDateString();
-            return userDate.includes(searchTerm);
-          } catch (e) {
-            return false;
-          }
-        default:
-          return true;
+  ordersArray.forEach(order => {
+    if (
+      Number(order.user_id) === Number(userId) &&
+      order.total_amount !== undefined &&
+      order.total_amount !== "[null]"
+    ) {
+      const orderKey = order.order_id || order.id;
+      if (orderKey && !uniqueOrders.has(orderKey)) {
+        uniqueOrders.set(orderKey, {
+          order_id: orderKey,
+          user_id: order.user_id,
+          status: order.status,
+          total_amount: parseFloat(order.total_amount) || 0,
+          order_created_at: order.order_created_at
+        });
       }
-    });
+    }
+  });
+
+  return Array.from(uniqueOrders.values());
+};
+
+const getUserTotalSpent = (orders, userId) => {
+  const userOrders = getUserOrders(orders, userId);
+  return userOrders.reduce((sum, order) => sum + order.total_amount, 0);
+};
+
+// Filter and sort users based on search term, search type, and sort settings
+const getFilteredAndSortedUsers = () => {
+  // Filter unique users based on the search criteria
+  let filteredUsers = getUniqueUsers(users).filter(user => {
+    if (!user) return false;
+
+    switch (searchType) {
+      case "username":
+        return user.username &&
+          user.username.toLowerCase().includes(searchTerm.toLowerCase());
+      case "total_spent":
+        // Pass orders as first argument, then the user ID
+        const totalSpent = getUserTotalSpent(orders, user.user_id);
+        const searchAmount = parseFloat(searchTerm);
+        if (isNaN(searchAmount)) return true;
+        return totalSpent >= searchAmount;
+      case "created_at":
+        if (!user.user_created_at) return false;
+        try {
+          const userDate = new Date(user.user_created_at).toLocaleDateString();
+          return userDate.includes(searchTerm);
+        } catch (e) {
+          return false;
+        }
+      default:
+        return true;
+    }
+  });
+
+  // Sort the filtered users based on the sort criteria
+  return filteredUsers.sort((a, b) => {
+    let comparison = 0;
+    let valueA, valueB;
+
+    switch (sortBy) {
+      case "username":
+        valueA = a.username || "";
+        valueB = b.username || "";
+        comparison = valueA.localeCompare(valueB);
+        break;
+      case "total_spent":
+        // Again, pass orders to properly calculate each user's total spent
+        valueA = getUserTotalSpent(orders, a.user_id);
+        valueB = getUserTotalSpent(orders, b.user_id);
+        comparison = valueA - valueB;
+        break;
+      case "created_at":
+        valueA = a.user_created_at ? new Date(a.user_created_at) : new Date(0);
+        valueB = b.user_created_at ? new Date(b.user_created_at) : new Date(0);
+        comparison = valueA - valueB;
+        break;
+      default:
+        comparison = 0;
+    }
     
-    // Sort the filtered users
-    return filteredUsers.sort((a, b) => {
-      let comparison = 0;
-      let valueA, valueB;
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
+};
 
-      switch (sortBy) {
-        case "username":
-          valueA = a.username || "";
-          valueB = b.username || "";
-          comparison = valueA.localeCompare(valueB);
-          break;
-        case "total_spent":
-          valueA = getUserTotalSpent(a.user_id);
-          valueB = getUserTotalSpent(b.user_id);
-          comparison = valueA - valueB;
-          break;
-        case "created_at":
-          valueA = a.user_created_at ? new Date(a.user_created_at) : new Date(0);
-          valueB = b.user_created_at ? new Date(b.user_created_at) : new Date(0);
-          comparison = valueA - valueB;
-          break;
-        default:
-          comparison = 0;
-      }
-      
-      // Reverse for descending order
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  };
+// Finally, use the filtered users
+const filteredUsers = getFilteredAndSortedUsers();
 
-  // Filter users based on search term
-  const filteredUsers = getFilteredAndSortedUsers();
-
+console.log(getUniqueUsers(users));
+console.log(getUserOrders(orders, 1));
+console.log(`Total spent: $${getUserTotalSpent(orders, 1).toFixed(2)}`);
+console.log(filteredUsers);
   
   
   // States for creating a user
@@ -281,8 +277,8 @@ const [showOrderModal, setShowOrderModal] = useState(false);
       <OrderModal
       showOrderModal={showOrderModal}
       setShowOrderModal={setShowOrderModal}
-      data={data}
-      setData={setData}
+      users={users}
+      products={products}
       postOrder={postOrder}
       />
       }
@@ -305,10 +301,12 @@ const [showOrderModal, setShowOrderModal] = useState(false);
 
       {/* Users Grid */}
       <UserGrid
-      filteredUsers = {filteredUsers}
-      getUserOrders = {getUserOrders}
-      handleUserClick = {handleUserClick}
-      formatDate = {formatDate}
+        filteredUsers={filteredUsers}
+        orders={orders}
+        getUserOrders={getUserOrders}
+        handleUserClick={handleUserClick}
+        formatDate={formatDate}
+        getUserTotalSpent={getUserTotalSpent}
       />
 
       {/* User Orders Drawer - Make sure you update UserDrawer component to handle no orders case */}
@@ -316,7 +314,9 @@ const [showOrderModal, setShowOrderModal] = useState(false);
       <UserDrawer selectedUser = {selectedUser}
       showUserDrawer = {showUserDrawer}
       handleCloseDrawer = {handleCloseDrawer} 
-      getUserOrders = {getUserOrders}/>
+      getUserOrders = {getUserOrders}
+      orders= {orders}
+      />
       }
     </div>
   );

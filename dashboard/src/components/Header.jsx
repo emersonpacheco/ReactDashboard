@@ -5,10 +5,10 @@ import logo from '../assets/default_icon.png';
 const Header = ({ title, dark, onToggleDarkMode, className = "" }) => {
   return(
     <header
-      className={`bg-gray-400 dark:bg-gray-900 bg-opacity-50 backdrop-blur-md shadow-lg border-b border-gray-600 dark:border-gray-500 h-20 transition-colors duration-300 w-full z-30 ${className}`}
+      className={`bg-gray-400 dark:bg-gray-900 bg-opacity-50 backdrop-blur-md shadow-lg border-b border-gray-500 dark:border-black h-20 transition-colors duration-300 w-full z-30 ${className}`}
     >
       <div className="absolute left-[4%] transform -translate-x-1/2 top-0 h-full flex items-center">
-       <img src={logo} alt="Logo" className="h-12 w-12 object-contain" />
+       <img src={logo} alt="Logo" className="h-12 w-12 object-contain brightness-0 dark:invert" />
 
       </div>
       <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100 translate-y-5 container mx-auto flex items-center justify-between px-4">

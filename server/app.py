@@ -72,6 +72,7 @@ def get_orders():
                 SELECT 
                     id AS order_id,
                     user_id,
+                    status,
                     created_at as order_created_at,
                     total_amount
                 FROM orders
