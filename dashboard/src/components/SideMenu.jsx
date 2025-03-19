@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MenuIcon, X, ChevronRight, ChevronLeft, Home, FileText } from 'lucide-react';
+import { MenuIcon, X, ChevronRight, ChevronLeft, Home, FileText, User } from 'lucide-react';
 
 const SideMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,6 +11,7 @@ const SideMenu = () => {
 
   const menuItems = [
     { name: 'Home', path: '/', icon: <Home size={20} /> },
+    { name: 'Users', path: '/users', icon: <User size={20} /> },
     { name: 'Dashboard', path: '/dashboard', icon: <FileText size={20} /> },
   ];
 

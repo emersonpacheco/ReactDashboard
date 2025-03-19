@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Page1 from './pages/pag1';
 import SideMenu from './components/SideMenu';
 import Dashboard from "./pages/pag2";
+import MainPage from "./pages/mainPage"
 
 function App() {
   const [darkMode, setDarkMode] = useState(
@@ -36,7 +37,8 @@ function App() {
         {/* Main content with padding to account for fixed header */}
         <main className="flex-1 overflow-y-auto pt-20">
           <Routes>
-            <Route path="/" element={<Page1 />} />
+            <Route path="/" element={<MainPage />} />
+            <Route path="/users" element={<Page1 />} />
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </main>
