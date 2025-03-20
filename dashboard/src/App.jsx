@@ -5,6 +5,7 @@ import Page1 from './pages/pag1';
 import SideMenu from './components/SideMenu';
 import Dashboard from "./pages/pag2";
 import MainPage from "./pages/mainPage"
+import ProductDetails from './components/pages/mainPage/ProductDetails';
 
 function App() {
   const [darkMode, setDarkMode] = useState(
@@ -40,6 +41,7 @@ function App() {
             <Route path="/" element={<MainPage />} />
             <Route path="/users" element={<Page1 />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/product/:productId" element={<ProductDetails />} />
           </Routes>
         </main>
       </div>
