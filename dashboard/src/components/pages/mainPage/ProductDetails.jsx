@@ -37,7 +37,14 @@ const ProductDetails = ({ addToCart }) => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl mt-5">
+        <div>
+        <button
+            onClick={() => navigate("/")}
+            className="mt-3 ml-10 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+        >
+            Back to Products
+        </button>
+        <div className="max-w-7xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl mt-0">
             <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-1/2 h-150 overflow-hidden flex items-center justify-center border dark:border-gray-900 border-gray-600">
                     {imageSrc ? (
@@ -69,15 +76,11 @@ const ProductDetails = ({ addToCart }) => {
                     >
                         Add to Cart
                     </button>
-                    <button
-                        onClick={() => navigate("/")}
-                        className="mt-4 ml-4 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
-                    >
-                        Back to Products
-                    </button>
+                    
                 </div>
             </div>
         </div>
+    </div>
     );
 };
 
