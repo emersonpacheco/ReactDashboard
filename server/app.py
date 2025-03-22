@@ -22,44 +22,6 @@ def get_db_connection():
             connect_timeout=5
         )
 
-@app.route("/api/data", methods=["GET"])
-def get_data():
-    conn = None
-    try:
-        conn = get_db_connection()
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute('''SELECT 
-                            o.id AS order_id, 
-                            u.id AS user_id,
-                            p.id AS product_id,
-                            u.created_at AS user_created_at,
-                            o.created_at AS order_created_at,
-                            total_amount,
-                            p.name AS product_name,
-                            p.category AS product_category,
-                            price,
-                            quantity,
-                            category,
-                            status,
-                            username,
-                            email,
-                            password_hash
-                            from orders o
-                            full outer join users u on o.user_id=u.id
-                            full outer join order_items oi on oi.order_id=o.id
-                            full outer join products p on oi.product_id=p.id''')
-            data = cur.fetchall()
-        return jsonify(data)
-    except psycopg2.OperationalError as e:
-        app.logger.error(f"Connection error: {str(e)}")
-        return jsonify({"error": "Database connection failed"}), 503
-    except Exception as e:
-        app.logger.error(f"Error fetching data: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-    finally:
-        if conn:
-            conn.close()
-
 @app.route("/api/get_orders", methods=["GET"])
 def get_orders():
     conn = None

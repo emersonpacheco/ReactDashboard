@@ -3,7 +3,7 @@ import React from "react";
 const Cards = ({ value, head, st }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md shadow-gray-500 dark:shadow-black p-3 
-    transition-all duration-300 hover:shadow-lg border border-gray-200 dark:border-gray-700 w-100">
+    transition-all duration-300 hover:shadow-lg border border-gray-200 dark:border-gray-700 w-95">
       <h5 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2 uppercase tracking-wider">
         {head}
       </h5>
