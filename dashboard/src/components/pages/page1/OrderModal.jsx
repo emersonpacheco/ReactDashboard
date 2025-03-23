@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const OrderModal = ({
   showOrderModal,
@@ -21,27 +21,78 @@ const OrderModal = ({
   // Add products state
   const [products, setProducts] = useState([]);
 
+  // Searchable dropdown states
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [selectedUserName, setSelectedUserName] = useState("");
+  const userDropdownRef = useRef(null);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     if (initialProducts && initialProducts.length > 0) {
       setProducts(initialProducts);
     }
   }, [initialProducts]);
 
+  // Update selected user name when userId changes
+  useEffect(() => {
+    if (orderUserId && users) {
+      const selectedUser = users.find(user => user.user_id === orderUserId);
+      if (selectedUser) {
+        setSelectedUserName(`${selectedUser.username} (ID: ${selectedUser.user_id})`);
+      }
+    } else {
+      setSelectedUserName("");
+    }
+  }, [orderUserId, users]);
+
   const addProductToOrder = () => {
     if (!currentProduct) return;
-
+  
     const productToAdd = products.find((p) => p.name === currentProduct);
     if (!productToAdd) return;
-
+  
+    // Check if product is out of stock
+    if (productToAdd.stock <= 0) {
+      alert(`${currentProduct} is out of stock.`);
+      return;
+    }
+  
     const existingProductIndex = selectedProducts.findIndex(
       (p) => p.name === currentProduct
     );
-
+  
+    let newQuantity = parseInt(currentQuantity);
+  
+    // Ensure quantity does not exceed stock
+    if (newQuantity > productToAdd.stock) {
+      alert(`Only ${productToAdd.stock} units of ${currentProduct} are available.`);
+      newQuantity = productToAdd.stock;
+    }
+  
     if (existingProductIndex >= 0) {
       const updatedProducts = [...selectedProducts];
-      updatedProducts[existingProductIndex].quantity += parseInt(
-        currentQuantity
-      );
+  
+      // Prevent exceeding stock in an update
+      const newTotalQuantity = updatedProducts[existingProductIndex].quantity + newQuantity;
+      if (newTotalQuantity > productToAdd.stock) {
+        alert(`Only ${productToAdd.stock} units available for ${currentProduct}.`);
+        return;
+      }
+  
+      updatedProducts[existingProductIndex].quantity = newTotalQuantity;
       setSelectedProducts(updatedProducts);
     } else {
       setSelectedProducts([
@@ -49,11 +100,11 @@ const OrderModal = ({
         {
           name: currentProduct,
           price: productToAdd.price,
-          quantity: parseInt(currentQuantity),
+          quantity: newQuantity,
         },
       ]);
     }
-
+  
     setCurrentProduct("");
     setCurrentQuantity(1);
   };
@@ -72,6 +123,14 @@ const OrderModal = ({
 
   // Updated order creation handler with complete product info
   const handleCreateOrder = async () => {
+    const updatedStock = products.map((p) => {
+      const orderedProduct = selectedProducts.find((sp) => sp.name === p.name);
+      if (orderedProduct) {
+        return { ...p, stock: Math.max(0, p.stock - orderedProduct.quantity) };
+      }
+      return p;
+    });
+  
     const orderPayload = {
       userId: orderUserId,
       totalAmount: orderTotalAmount,
@@ -80,19 +139,25 @@ const OrderModal = ({
         const fullProduct = products.find((p) => p.name === product.name);
         return {
           product_id: fullProduct.product_id,
-          product_name: fullProduct.name, // include name for the API
+          product_name: fullProduct.name,
           quantity: product.quantity,
-          price: fullProduct.price, // include price for the API
+          price: fullProduct.price,
         };
       }),
+      updatedStock: updatedStock.map((p) => ({
+        product_id: p.product_id,
+        new_stock: p.stock,
+      })),
     };
-
+  
     const result = await postOrder(orderPayload);
     console.log("Order creation result:", result);
     setOrderResponse(result);
-
+  
     if (result.order) {
+      setProducts(updatedStock);
       setOrderUserId("");
+      setSelectedUserName("");
       setSelectedProducts([]);
       setOrderStatus("pending");
       setShowOrderModal(false);
@@ -101,6 +166,18 @@ const OrderModal = ({
         setOrderAlertVisible(false);
       }, 3000);
     }
+  };
+
+  // Filter users based on search term
+  const filteredUsers = users?.filter(user => 
+    user.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    user.user_id.toString().includes(userSearchTerm)
+  ) || [];
+
+  const handleSelectUser = (user) => {
+    setOrderUserId(user.user_id);
+    setSelectedUserName(`${user.username} (ID: ${user.user_id})`);
+    setIsUserDropdownOpen(false);
   };
 
   useEffect(() => {
@@ -155,8 +232,8 @@ const OrderModal = ({
             </button>
           </div>
           <div className="flex flex-col space-y-4">
-            {/* User ID Input */}
-            <div className="relative">
+            {/* Searchable User Select Dropdown */}
+            <div className="relative" ref={userDropdownRef}>
               <label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 block">
                 User ID
               </label>
@@ -176,19 +253,57 @@ const OrderModal = ({
                     ></path>
                   </svg>
                 </div>
-                <select
-                  value={orderUserId}
-                  onChange={(e) => setOrderUserId(e.target.value)}
-                  className="pl-10 w-full px-3 py-2 border bg-white dark:bg-gray-800 border-gray-300 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all appearance-none"
+                <div 
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} 
+                  className="pl-10 w-full px-3 py-2 border bg-white dark:bg-gray-800 border-gray-300 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all cursor-pointer flex justify-between items-center"
                 >
-                  <option value="">Select a user</option>
-                  {users &&
-                    users.map((user) => (
-                      <option key={user.user_id} value={user.user_id}>
-                        {user.username} (ID: {user.user_id})
-                      </option>
-                    ))}
-                </select>
+                  <span className={selectedUserName ? "" : "text-gray-400"}>
+                    {selectedUserName || "Select a user"}
+                  </span>
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+                
+                {isUserDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-300 dark:border-gray-700 max-h-60 overflow-y-auto">
+                    <div className="sticky top-0 bg-white dark:bg-gray-800 p-2 border-b border-gray-200 dark:border-gray-700">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          className="pl-10 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:text-white"
+                          placeholder="Search users..."
+                          value={userSearchTerm}
+                          onChange={(e) => setUserSearchTerm(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                    
+                    {filteredUsers.length > 0 ? (
+                      <ul>
+                        {filteredUsers.map((user) => (
+                          <li
+                            key={user.user_id}
+                            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-left text-gray-800 dark:text-white"
+                            onClick={() => handleSelectUser(user)}
+                          >
+                            {user.username} (ID: {user.user_id})
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="p-4 text-gray-500 dark:text-gray-400 text-center">
+                        No users found
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

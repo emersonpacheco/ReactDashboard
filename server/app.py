@@ -185,13 +185,14 @@ def insert_order():
         user_id = data.get("user_id")
         total_amount = data.get("total_amount")
         status = data.get("status")
-        products = data.get("products")  # Expecting products in the payload
+        products = data.get("products")  
+        updated_stock = data.get("updated_stock")  # Stock updates received
 
         # Validate required fields
-        if user_id is None or total_amount is None or status is None or products is None:
+        if user_id is None or total_amount is None or status is None or products is None or updated_stock is None:
             return jsonify({"error": "Missing required fields"}), 400
             
-        # Validate data types for user and amount
+        # Validate data types
         try:
             user_id = int(user_id)
             total_amount = float(total_amount)
@@ -212,7 +213,7 @@ def insert_order():
             )
             order_id = cur.fetchone()["id"]  
             
-            # Insert order items without price
+            # Insert order items
             for product in products:
                 product_id = product.get("product_id")
                 quantity = product.get("quantity")
@@ -225,55 +226,34 @@ def insert_order():
                     (order_id, product_id, quantity)
                 )
 
+            # Update stock levels
+            for stock in updated_stock:
+                product_id = stock.get("product_id")
+                new_stock = stock.get("new_stock")
+
+                if product_id is None or new_stock is None:
+                    return jsonify({"error": "Missing stock update details"}), 400
+
+                cur.execute(
+                    "UPDATE products SET stock = %s WHERE id = %s",
+                    (new_stock, product_id)
+                )
+
             conn.commit()
 
-            # Retrieve the full order details including the inserted items
-            cur.execute(
-                """
-                SELECT 
-                  o.id AS order_id, 
-                  u.id AS user_id,
-                  p.id AS product_id,
-                  u.created_at AS user_created_at,
-                  o.created_at AS order_created_at,
-                  o.total_amount,
-                  p.name AS product_name,
-                  p.category AS product_category,
-                  oi.quantity,
-                  o.status,
-                  u.username,
-                  u.email
-                FROM orders o
-                JOIN users u ON o.user_id = u.id
-                JOIN order_items oi ON oi.order_id = o.id
-                JOIN products p ON oi.product_id = p.id
-                WHERE o.id = %s
-                """,
-                (order_id,)
-            )
-            order_data = cur.fetchall()
-            
-            if not order_data:
-                app.logger.error(f"Order was inserted but could not be retrieved with ID {order_id}")
-                return jsonify({"error": "Order was created but could not be retrieved"}), 500
-
-        return jsonify({
-            "message": "Order inserted successfully",
-            "order": order_data
-        }), 201
-
-    except psycopg2.OperationalError as e:
-        app.logger.error(f"Connection error: {str(e)}")
-        return jsonify({"error": "Database connection failed"}), 503
+            return jsonify({
+                "message": "Order inserted successfully, stock updated",
+                "order_id": order_id
+            }), 201
 
     except Exception as e:
+        if conn:
+            conn.rollback()  # Rollback in case of failure
         app.logger.error(f"Error inserting order: {str(e)}")
-        app.logger.error(traceback.format_exc())
-        return jsonify({"error": "Error inserting order", "details": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
     finally:
         if conn:
             conn.close()
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

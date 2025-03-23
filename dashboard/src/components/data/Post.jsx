@@ -16,14 +16,12 @@ const postUser = async (userName, userEmail, password) => {
 
 const postOrder = async (orderData) => {
   try {
-    const { userId, totalAmount, status, products } = orderData;
-    
-    // Ensure products array is not empty
+    const { userId, totalAmount, status, products, updatedStock } = orderData;
+
     if (!products || products.length === 0) {
       return { error: "Order must include at least one product" };
     }
 
-    // Create the order with products (excluding price)
     const orderResponse = await axios.post("http://localhost:5000/api/orders", {
       user_id: parseInt(userId),
       total_amount: parseFloat(totalAmount),
@@ -32,8 +30,9 @@ const postOrder = async (orderData) => {
         product_id: product.product_id,
         quantity: product.quantity
       })),
+      updated_stock: updatedStock
     });
-    
+
     return { order: orderResponse.data, success: true };
   } catch (error) {
     console.error("Error:", error);
