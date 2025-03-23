@@ -6,6 +6,7 @@ import SideMenu from './components/SideMenu';
 import Dashboard from "./pages/pag2";
 import MainPage from "./pages/mainPage"
 import ProductDetails from './components/pages/mainPage/ProductDetails';
+import { CartProvider } from "./components/cart/ShoppingCart";
 
 function App() {
   const [darkMode, setDarkMode] = useState(
@@ -30,7 +31,7 @@ function App() {
         onToggleDarkMode={() => setDarkMode(!darkMode)}
         className="fixed top-0 left-0 w-full z-30"
       />
-      
+       <CartProvider>
       <div className="flex min-h-screen">
         {/* SideMenu with adjustments for fixed header */}
         <SideMenu darkMode={darkMode} className="h-full" />
@@ -43,8 +44,10 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/product/:productId" element={<ProductDetails />} />
           </Routes>
+
         </main>
       </div>
+      </CartProvider>
     </div>
   );
 }
