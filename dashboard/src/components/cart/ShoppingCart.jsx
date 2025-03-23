@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiShoppingCart } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
+import { postOrder } from '../data/Post';
 
 // Create a context to manage cart state globally
 export const CartContext = React.createContext();
@@ -78,6 +79,8 @@ export const CartProvider = ({ children }) => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
+ 
+
   // Values to be provided to consumers
   const cartContextValue = {
     cart,
@@ -105,12 +108,53 @@ const ShoppingCart = () => {
     cart, 
     userId, 
     setUserId, 
-    removeFromCart, 
+    removeFromCart,
+    clearCart, 
     updateQuantity,
     getTotalPrice,
     isCartOpen, 
     setIsCartOpen 
   } = React.useContext(CartContext);
+
+  const handleCheckout = async () => {
+    if (!userId) {
+      alert("Please enter a User ID before checking out.");
+      return;
+    }
+  
+    const updatedStock = cart.map((item) => ({
+      product_id: item.product_id,
+      new_stock: Math.max(0, item.stock - item.quantity),
+    }));
+  
+    const orderPayload = {
+      userId: userId,
+      totalAmount: getTotalPrice(),
+      status: "pending", // Default status
+      products: cart.map((item) => ({
+        product_id: item.product_id,
+        product_name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      updatedStock,
+    };
+  
+    try {
+      const response = await postOrder(orderPayload); // Ensure `postOrder` is defined
+      console.log("Order creation result:", response);
+      
+      if (response.success) {
+        clearCart(); // Clear cart after successful order
+        alert("Order placed successfully!");
+      } else {
+        alert("Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert("An error occurred while placing the order.");
+    }
+  };
 
   return (
     <>
@@ -195,6 +239,7 @@ const ShoppingCart = () => {
                   <span>${getTotalPrice().toFixed(2)}</span>
                 </div>
                 <button 
+                  onClick={handleCheckout}
                   className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
                 >
                   Checkout
