@@ -173,7 +173,7 @@ const ShoppingCart = () => {
 
       {/* Cart Drawer */}
       {isCartOpen && (
-        <div className="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-900 shadow-lg p-5 overflow-y-auto z-50">
+        <div className="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-900 text-black dark:text-white shadow-lg p-5 overflow-y-auto z-50">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Shopping Cart</h2>
             <button 
@@ -185,7 +185,7 @@ const ShoppingCart = () => {
           </div>
           
           <div className="mb-4">
-            <label className="block text-sm font-medium">User ID:</label>
+            <label className="block text-sm font-medium mb-1">User ID:</label>
             <input
               type="text"
               value={userId}
@@ -217,14 +217,14 @@ const ShoppingCart = () => {
                     <div className="flex items-center mt-2">
                       <button 
                         onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                        className="bg-gray-200 px-2 rounded"
+                        className="bg-gray-200 dark:bg-gray-500 px-2 rounded"
                       >
                         -
                       </button>
                       <span className="mx-2">{item.quantity}</span>
                       <button 
                         onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
-                        className="bg-gray-200 px-2 rounded"
+                        className="bg-gray-200 dark:bg-gray-500 px-2 rounded"
                       >
                         +
                       </button>
