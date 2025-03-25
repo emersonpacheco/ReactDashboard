@@ -255,5 +255,51 @@ def insert_order():
     finally:
         if conn:
             conn.close()
+
+@app.route("/api/orders/status", methods=["PATCH"])
+def update_order_status():
+    conn = None
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        order_id = data.get("order_id")
+        new_status = data.get("new_status")
+        if order_id is None or new_status is None:
+            return jsonify({"error": "Missing order_id or new_status"}), 400
+
+        try:
+            order_id = int(order_id)
+        except (ValueError, TypeError):
+            return jsonify({"error": "order_id must be an integer"}), 400
+
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Verify the order exists
+            cur.execute("SELECT id FROM orders WHERE id = %s", (order_id,))
+            if not cur.fetchone():
+                return jsonify({"error": f"Order with ID {order_id} does not exist"}), 404
+
+            # Update the order status
+            cur.execute("UPDATE orders SET status = %s WHERE id = %s", (new_status, order_id))
+            conn.commit()
+
+            return jsonify({
+                "message": "Order status updated successfully",
+                "order_id": order_id,
+                "new_status": new_status
+            }), 200
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        app.logger.error(f"Error updating order status: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

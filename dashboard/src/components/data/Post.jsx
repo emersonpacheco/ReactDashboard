@@ -26,11 +26,11 @@ const postOrder = async (orderData) => {
       user_id: parseInt(userId),
       total_amount: parseFloat(totalAmount),
       status: status,
-      products: products.map(product => ({
+      products: products.map((product) => ({
         product_id: product.product_id,
-        quantity: product.quantity
+        quantity: product.quantity,
       })),
-      updated_stock: updatedStock
+      updated_stock: updatedStock,
     });
 
     return { order: orderResponse.data, success: true };
@@ -40,4 +40,17 @@ const postOrder = async (orderData) => {
   }
 };
 
-export { postUser, postOrder };
+const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const response = await axios.patch("http://localhost:5000/api/orders/status", {
+      order_id: orderId,
+      new_status: newStatus,
+    });
+    return { order: response.data, success: true };
+  } catch (error) {
+    console.error("Error:", error);
+    return { error: "Error updating order status" };
+  }
+};
+
+export { postUser, postOrder, updateOrderStatus };

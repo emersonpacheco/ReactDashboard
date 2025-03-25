@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { updateOrderStatus } from '../../data/Post';
 
-const UserDrawer = ({ selectedUser, showUserDrawer, handleCloseDrawer,getUserOrders, orders }) => {
+const UserDrawer = ({ selectedUser, showUserDrawer, handleCloseDrawer, getUserOrders, orders }) => {
+  const [updatedStatuses, setUpdatedStatuses] = useState({});
+
   // Helper function to format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString();
@@ -26,6 +28,23 @@ const UserDrawer = ({ selectedUser, showUserDrawer, handleCloseDrawer,getUserOrd
       case 'pending':
       default:
         return 'bg-yellow-600';
+    }
+  };
+
+  const handleStatusChange = (orderId, newStatus) => {
+    setUpdatedStatuses((prev) => ({ ...prev, [orderId]: newStatus }));
+  };
+
+  const updateOrderStatusHandler = async (order) => {
+    const newStatus = updatedStatuses[order.order_id];
+    if (!newStatus || newStatus === order.status) return;
+  
+    const result = await updateOrderStatus(order.order_id, newStatus);
+    if (result.success) {
+      alert("Order status updated successfully!");
+      // Optionally, you might refresh the orders list here
+    } else {
+      alert("Failed to update order status");
     }
   };
 
@@ -142,7 +161,6 @@ const UserDrawer = ({ selectedUser, showUserDrawer, handleCloseDrawer,getUserOrd
                         className="bg-white dark:bg-gray-700 rounded-lg shadow overflow-hidden transition-all hover:shadow-md"
                       >
                         {/* Status Bar */}
-
                         <div className={`h-2 ${getStatusColor(order.status)}`}></div>
 
                         <div className="p-4">
@@ -171,7 +189,7 @@ const UserDrawer = ({ selectedUser, showUserDrawer, handleCloseDrawer,getUserOrd
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
                               <span className="text-sm text-gray-800 dark:text-white">
                                 Created
@@ -188,6 +206,28 @@ const UserDrawer = ({ selectedUser, showUserDrawer, handleCloseDrawer,getUserOrd
                                 ${parseFloat(order.total_amount || 0).toFixed(2)}
                               </p>
                             </div>
+                          </div>
+
+                          {/* Status update controls while maintaining design */}
+                          <div className="flex items-center space-x-2 border-t pt-4">
+                            <select
+                              className="p-2 border rounded dark:bg-gray-600 dark:text-white focus:outline-none"
+                              value={updatedStatuses[order.order_id] || order.status}
+                              onChange={(e) =>
+                                handleStatusChange(order.order_id, e.target.value)
+                              }
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="processing">Processing</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button
+                              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                              onClick={() => updateOrderStatusHandler(order)}
+                            >
+                              Update
+                            </button>
                           </div>
                         </div>
                       </div>
