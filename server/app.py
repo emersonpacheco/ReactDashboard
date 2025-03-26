@@ -301,5 +301,54 @@ def update_order_status():
         if conn:
             conn.close()
 
+@app.route("/api/products/stock", methods=["POST"])
+def update_product_stock():
+    conn = None
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        product_id = data.get("product_id")
+        updated_stock = data.get("updated_stock")
+
+        # Validate required fields
+        if product_id is None or updated_stock is None:
+            return jsonify({"error": "Missing product_id or updated_stock"}), 400
+
+        # Validate data types
+        try:
+            product_id = int(product_id)
+            updated_stock = int(updated_stock)
+        except (ValueError, TypeError) as e:
+            return jsonify({"error": f"Invalid data types: {str(e)}"}), 400
+
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Check if product exists
+            cur.execute("SELECT id FROM products WHERE id = %s", (product_id,))
+            if not cur.fetchone():
+                return jsonify({"error": f"Product with ID {product_id} does not exist"}), 404
+
+            # Update the product stock
+            cur.execute("UPDATE products SET stock = %s WHERE id = %s RETURNING *", (updated_stock, product_id))
+            updated_product = cur.fetchone()
+            conn.commit()
+
+            return jsonify({
+                "message": "Product stock updated successfully",
+                "product": updated_product
+            }), 200
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        app.logger.error(f"Error updating product stock: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

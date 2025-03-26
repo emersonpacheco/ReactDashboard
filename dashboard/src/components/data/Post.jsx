@@ -53,4 +53,18 @@ const updateOrderStatus = async (orderId, newStatus) => {
   }
 };
 
-export { postUser, postOrder, updateOrderStatus };
+const postUpdateStock = async (productId, updatedStock) => {
+  try {
+    const response = await axios.post("http://localhost:5000/api/products/stock", {
+      product_id: productId,
+      updated_stock: updatedStock
+    });
+    return { product: response.data, success: true };
+  } catch (error) {
+    console.error("Error:", error);
+    return { error: "Error updating product stock" };
+  }
+};
+
+
+export { postUser, postOrder, updateOrderStatus, postUpdateStock };

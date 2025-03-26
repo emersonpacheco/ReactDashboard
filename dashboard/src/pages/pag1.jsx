@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useData from '../components/data/data';
-import { postOrder, postUser } from '../components/data/Post';
+import { postOrder, postUser, postUpdateStock } from '../components/data/Post';
 import UserDrawer from '../components/pages/page1/UserDrawer';
 import UserModal from '../components/pages/page1/UserModal';
 import OrderModal from '../components/pages/page1/OrderModal';
@@ -8,11 +8,13 @@ import UserGrid from '../components/pages/page1/UserGrid';
 import UserFilters from '../components/pages/page1/UserFilters';
 import TitleandButtons from '../components/pages/page1/TitleandButtons';
 import Loading from '../components/pages/page1/Loading';
+import StockModal from '../components/pages/page1/StockModal';
 
 const Page1 = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("username"); // Options: username, total_spent, created_at
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showStockModal, setShowStockModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserDrawer, setShowUserDrawer] = useState(false);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -188,6 +190,66 @@ const filteredUsers = getFilteredAndSortedUsers();
     }
   };
 
+const [stockResponse, setStockResponse] = useState("");
+const [stockAlertVisible, setStockAlertVisible] = useState(false);
+
+const handleUpdateStock = async (selectedProduct, stockToAdd) => {
+  if (selectedProduct === "" || stockToAdd === "") {
+    setStockResponse({ 
+      message: 'Please select a product and enter stock quantity', 
+      error: true 
+    });
+    return;
+  }
+  
+  // Convert selected value to a number
+  const productId = Number(selectedProduct);
+  console.log("Selected Product ID:", productId);
+  console.log("Stock to Add:", stockToAdd);
+
+  // Find the product using product_id
+  const product = products.find(p => p.product_id === productId);
+  if (!product) {
+    setStockResponse({ 
+      message: 'Selected product not found', 
+      error: true 
+    });
+    return;
+  }
+
+  // Calculate updated stock
+  const updatedStock = product.stock + parseInt(stockToAdd, 10);
+  console.log("Updating product", productId, "with new stock", updatedStock);
+
+  try {
+    const result = await postUpdateStock(productId, updatedStock);
+    console.log("API Response:", result);  // Add this line to log the full response
+    setStockResponse(result);
+  
+    if (result.message) {
+      // Close modal after successful update
+      setShowStockModal(false);
+      setStockAlertVisible(true);
+      setTimeout(() => {
+        setStockAlertVisible(false);
+      }, 3000);
+    }
+  } catch (error) {
+    console.error("Full Error Details:", error);  // More detailed error logging
+    console.error("Error Response:", error.response);  // Log the full error response
+    setStockResponse({ 
+      message: 'Failed to update stock. Please try again.', 
+      error: true 
+    });
+    setStockAlertVisible(true);
+    setTimeout(() => {
+      setStockAlertVisible(false);
+    }, 3000);
+  }
+};
+
+
+
 // States for creating an order
 const [orderResponse, setOrderResponse] = useState("");
 const [orderAlertVisible, setOrderAlertVisible] = useState(false);
@@ -238,7 +300,16 @@ const [showOrderModal, setShowOrderModal] = useState(false);
       orderResponse = {orderResponse}
       setShowUserModal = {setShowUserModal}
       setShowOrderModal = {setShowOrderModal}
+      setShowStockModal = {setShowStockModal}
       />
+      {/* Update Stcok Modal */}
+      {showStockModal && <StockModal
+      showStockModal = {showStockModal}
+      setShowStockModal = {setShowStockModal}
+      products = {products}
+      handleUpdateStock = {handleUpdateStock}
+      />
+    }
 
       {/* User Creation Modal */}
       {showUserModal && 
