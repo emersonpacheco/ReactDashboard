@@ -18,7 +18,7 @@ const Dashboard = () => {
 
 // Calculate overall total sales (only for completed orders)
     const totalAmount = orders ? orders
-        .filter(item => item.status === "completed") // Check status
+        .filter(item => item.status === "completed") 
         .reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0) 
         : 0;
     const formattedTotal = totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
