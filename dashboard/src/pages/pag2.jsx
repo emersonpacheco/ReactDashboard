@@ -48,13 +48,13 @@ const Dashboard = () => {
     const formattedTodaySales = salesToday.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     return (
-    <div className="p-5 ml-15 mr-15 mx-auto mb-5">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div className="">
+        <div className="p-5 ml-15 mr-15 mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
         </div>
-        <div>
+        <div className="ml-13 mr-13">
             {/* Cards Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center gap-0 mt-5 ml-2 mr-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center gap-0 mt-3">
                 <Cards value={formattedUniqueUsers} head="Total Users" st="Active Users" />
                 <Cards value={`$ ${formattedTotal}`} head="Total Sales" st="Updated just now" />
                 <Cards value={`${completedPercentage} %`} head="Completed Orders" st="Decreased" />
